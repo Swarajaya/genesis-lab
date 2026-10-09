@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #04060a;
+  --color-ink: #070a10;
+  --color-panel: rgb(255 255 255 / 0.035);
+  --color-line: rgb(255 255 255 / 0.09);
+  --color-text: #e8edf5;
+  --color-dim: #9aa5b8;
+  --color-faint: #6b768a;
+  --color-signal: #7be0d0;
+  --color-ok: #5fe3a1;
+  --color-warn: #f2c260;
+  --color-bad: #ff6b7a;
+  --font-sans: ui-sans-serif, "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-void);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 700px at 78% -10%, rgb(123 224 208 / 0.07), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgb(120 140 255 / 0.06), transparent 60%),
+    var(--color-void);
+}
+
+::selection {
+  background: rgb(123 224 208 / 0.3);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02));
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 30px 80px -40px rgb(0 0 0 / 0.8);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+.display {
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-line), transparent);
+}
+
+.scan {
+  background-image: linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-ok);
+  box-shadow: 0 0 0 0 rgb(95 227 161 / 0.6);
+  animation: ping 2.2s ease-out infinite;
+}
+
+@keyframes ping {
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px rgb(95 227 161 / 0);
+  }
+}
+
+input,
+select,
+textarea {
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  color: var(--color-text);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  width: 100%;
+  min-width: 0;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgb(123 224 208 / 0.6);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(123 224 208 / 0.15);
+}
+
+select option {
+  background: #0b0f17;
+}
+
+input[type="range"] {
+  padding: 0;
+  accent-color: var(--color-signal);
+}
+
+input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--color-signal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Unlayered form defaults above would otherwise override Tailwind's layered sr-only on inputs. */
+input.sr-only {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  position: absolute;
+}
+
+/* ---- /lab visual system ---- */
+.gradient-text {
+  background: linear-gradient(100deg, #f4fbff 10%, #8ff0df 48%, #8fa8ff 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.spot {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), var(--spot, rgb(123 224 208 / 0.18)), transparent 60%);
+}
+.spot:hover::before,
+.spot:focus-visible::before {
+  opacity: 1;
+}
+
+.bracket {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgb(123 224 208 / 0.55);
+  pointer-events: none;
+}
+.bracket.tl { top: 14px; left: 14px; border-right: 0; border-bottom: 0; }
+.bracket.tr { top: 14px; right: 14px; border-left: 0; border-bottom: 0; }
+.bracket.bl { bottom: 14px; left: 14px; border-right: 0; border-top: 0; }
+.bracket.br { bottom: 14px; right: 14px; border-left: 0; border-top: 0; }
+
+.stage-vignette {
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 35%, rgb(4 6 10 / 0.7) 100%),
+    linear-gradient(180deg, rgb(4 6 10 / 0.35), transparent 22%, transparent 78%, rgb(4 6 10 / 0.55));
+}
+
+@keyframes sweep {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+.sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent, rgb(123 224 208 / 0.05), transparent);
+  animation: sweep 7s linear infinite;
+  pointer-events: none;
+}
+
+/* ---- Blood page: larger type, scoped to <main class="blood-xl"> (opt-in; other experiments are unaffected) ---- */
+.blood-xl .text-xs { font-size: 0.95rem; line-height: 1.45; }
+.blood-xl .text-sm { font-size: 1.08rem; line-height: 1.6; }
+.blood-xl .text-base { font-size: 1.2rem; line-height: 1.65; }
+.blood-xl .text-lg { font-size: 1.4rem; }
+.blood-xl .text-xl { font-size: 1.6rem; }
+.blood-xl .text-2xl { font-size: 1.9rem; }
+.blood-xl .text-3xl { font-size: 2.3rem; }
+.blood-xl .text-\[9px\] { font-size: 0.78rem; }
+.blood-xl .text-\[10px\] { font-size: 0.82rem; }
+.blood-xl .text-\[11px\] { font-size: 0.88rem; }
+.blood-xl .text-\[0\.68rem\] { font-size: 0.85rem; }
+.blood-xl .label { font-size: 0.82rem; }
+.blood-xl input, .blood-xl select, .blood-xl textarea { font-size: 1.05rem; padding: 0.7rem 0.9rem; }
+.blood-xl button { font-size: max(1rem, 1em); }
+.blood-xl .\!text-6xl { font-size: 3.75rem !important; }
+.blood-xl .\!text-4xl { font-size: 2.25rem !important; }
+.blood-xl .\!text-base { font-size: 1.1rem !important; }
+.blood-xl .\!text-xs { font-size: 0.9rem !important; }
+
+/* ---- /lab page: wider layout + larger type, scoped to <main class="lab-xl"> (opt-in; no other route is affected) ----
+   Unlayered, so it wins over Tailwind's layered utilities (same approach as .blood-xl). Phones (<640px) are left exactly as before. */
+@media (min-width: 640px) {
+  .lab-xl .text-xs { font-size: 1rem; line-height: 1.5; }
+  .lab-xl .text-sm { font-size: 1.125rem; line-height: 1.6; }
+  .lab-xl .text-base { font-size: 1.25rem; line-height: 1.65; }
+  .lab-xl .text-lg { font-size: 1.4rem; }
+  .lab-xl .text-xl { font-size: 1.6rem; }
+  .lab-xl .text-\[0\.6rem\] { font-size: 0.8rem; }
+  .lab-xl .text-\[0\.62rem\] { font-size: 0.85rem; }
+  .lab-xl .text-\[0\.65rem\] { font-size: 0.9rem; }
+  .lab-xl .text-\[0\.7rem\] { font-size: 1rem; }
+  .lab-xl .label { font-size: 0.85rem; }
+
+  .lab-xl .lab-title { font-size: 5rem; }
+  .lab-xl .lab-sub { font-size: 1.25rem; max-width: 44rem; }
+  .lab-xl .lab-stat-n { font-size: 2.75rem; }
+  .lab-xl .lab-stat-l { font-size: 0.85rem; margin-top: 0.35rem; }
+  .lab-xl .lab-h2 { font-size: 3rem; }
+  .lab-xl .lab-hint svg { width: 1.1rem; height: 1.1rem; }
+
+  /* header (shared component) enlarged only while /lab is on screen */
+  body:has(.lab-xl) header > div { height: 4.25rem; max-width: 120rem; }
+  body:has(.lab-xl) header svg { width: 28px; height: 28px; }
+  body:has(.lab-xl) header a[aria-label="Genesis Lab home"] span { font-size: 1.15rem; }
+  body:has(.lab-xl) header nav a { font-size: 1.05rem; padding: 0.5rem 1rem; }
+  body:has(.lab-xl) footer > div { max-width: 120rem; }
+}
+
+/* tablet-landscape / small laptop: heading on top, stats strip below, so the larger heading never wraps */
+@media (min-width: 1024px) {
+  .lab-xl .lab-title { font-size: 6rem; }
+  .lab-xl .lab-sub { font-size: 1.35rem; }
+}
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .lab-xl .lab-hero { flex-direction: column; align-items: stretch; }
+  .lab-xl .lab-stats { width: 100%; }
+}
+
+/* side-by-side hero: heading scales with the room left beside the stats box */
+@media (min-width: 1280px) {
+  .lab-xl .lab-title { font-size: clamp(6rem, calc((100vw - 40rem) / 6.6), 7rem); }
+  .lab-xl .lab-sub { font-size: 1.5rem; }
+  .lab-xl .lab-stats { width: 28rem; }
+}
+
+/* very wide screens: align header/footer padding with the content and give the info panel a little more room */
+@media (min-width: 1536px) {
+  body:has(.lab-xl) header > div,
+  body:has(.lab-xl) footer > div { padding-inline: 2.5rem; }
+  .lab-xl .lab-stats { width: 32rem; }
+  .lab-xl .lab-info-wrap { width: 27rem; }
+}
+
+/* info panel overlay: never taller than the stage; scrolls internally if the larger text needs it */
+.lab-xl .lab-info { max-height: 100%; overflow-y: auto; }
