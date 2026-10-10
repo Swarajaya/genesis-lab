@@ -1,5 +1,6 @@
 import { lanAddresses } from "@/lib/blood-live/lan";
 import { createSession } from "@/lib/blood-live/service";
+import { diagnose } from "@/lib/blood-live/store";
 import { ok, route } from "@/lib/security/api";
 
 export const runtime = "nodejs";
@@ -15,4 +16,4 @@ export const POST = route({ scope: "blood-live-create", limit: 20 }, async (req)
 });
 
 /** Health probe: open /api/blood/live in a browser to confirm this route is installed. */
-export const GET = route({ scope: "blood-live-probe", limit: 60 }, async () => ok({ route: "blood-live", method: "POST creates a session" }));
+export const GET = route({ scope: "blood-live-probe", limit: 60 }, async () => ok({ route: "blood-live", method: "POST creates a session", ...(await diagnose()) }));

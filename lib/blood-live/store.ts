@@ -163,22 +163,30 @@ export const liveBus: EventEmitter = (g.__liveBus ??= new EventEmitter().setMaxL
  * local stream, so a fresh project works immediately and the QR flow never fails with a 500.
  */
 const PROBE_RETRY_MS = 15_000;
-type Probe = { ready: boolean; at: number };
+type Probe = { ready: boolean; at: number; why?: string };
 const gp = globalThis as G & { __liveProbe?: Probe };
 
 async function liveTablesReady(db: import("@supabase/supabase-js").SupabaseClient): Promise<boolean> {
   const cached = gp.__liveProbe;
   if (cached && (cached.ready || Date.now() - cached.at < PROBE_RETRY_MS)) return cached.ready;
   let ready = false;
+  let why = "";
   try {
-    const t = await db.from("blood_live_sessions").select("id").limit(1);
-    const f = await db.rpc("blood_live_commit", { p_session: "00000000-0000-4000-8000-000000000000", p_expected: -1, p_world: {}, p_status: "active", p_ended: null, p_participants: [], p_allocations: [], p_events: [] });
-    ready = !t.error && !f.error;
-    if (!ready) console.warn("[blood-live] Supabase live tables not found. Run the Blood LIVE MODE block of supabase/schema.sql. Using in-memory sessions meanwhile.");
-  } catch {
+    // Never let an unreachable or paused Supabase hang a request: give the probe a hard 5 s budget.
+    const probe = async () => {
+      const t = await db.from("blood_live_sessions").select("id").limit(1);
+      const f = await db.rpc("blood_live_commit", { p_session: "00000000-0000-4000-8000-000000000000", p_expected: -1, p_world: {}, p_status: "active", p_ended: null, p_participants: [], p_allocations: [], p_events: [] });
+      return { ok: !t.error && !f.error, why: t.error?.message || f.error?.message || "" };
+    };
+    const r = await Promise.race([probe(), new Promise<{ ok: boolean; why: string }>((res) => setTimeout(() => res({ ok: false, why: "Supabase did not answer within 5 s (project paused or URL wrong?)" }), 5000))]);
+    ready = r.ok;
+    why = r.why;
+    if (!ready) console.warn("[blood-live] Supabase live tables not usable:", why, "Run supabase/blood_live.sql in the Supabase SQL editor.");
+  } catch (e) {
     ready = false;
+    why = e instanceof Error ? e.message : "probe failed";
   }
-  gp.__liveProbe = { ready, at: Date.now() };
+  gp.__liveProbe = { ready, at: Date.now(), why };
   return ready;
 }
 
@@ -202,4 +210,28 @@ export async function getStore(sessionId?: string): Promise<LiveStore> {
     throw new ApiError(503, "live_storage_missing", "Live Mode needs the Supabase tables on this host. Run the Blood LIVE MODE block of supabase/schema.sql in the Supabase SQL editor, and set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY.");
   }
   return (g.__liveMem ??= new MemoryStore());
+}
+
+/** Booleans and short reasons only (no secrets). Used by GET /api/blood/live so a deployment can be checked from a browser. */
+export async function diagnose() {
+  const env = {
+    NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    LIVE_SECRET: Boolean(process.env.LIVE_SECRET),
+  };
+  let tables: "ready" | "not_ready" | "not_configured" = "not_configured";
+  let reason = "";
+  if (env.NEXT_PUBLIC_SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { getAdmin } = await import("@/lib/supabase/admin");
+    const db = getAdmin();
+    if (db) {
+      delete gp.__liveProbe; // always a fresh answer
+      tables = (await liveTablesReady(db)) ? "ready" : "not_ready";
+      reason = (gp as { __liveProbe?: Probe }).__liveProbe?.why ?? "";
+    }
+  }
+  const vercel = Boolean(process.env.VERCEL);
+  const store = tables === "ready" ? "supabase" : vercel ? "unavailable" : "memory";
+  return { vercel, store, tables, reason: reason.slice(0, 200), env, realtime: env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "supabase broadcast + polling" : "polling" };
 }

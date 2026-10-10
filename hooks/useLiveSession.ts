@@ -45,15 +45,24 @@ export function useLiveSession(sessionId: string, token: string | null, opts: { 
   const fetchSnap = useCallback(async () => {
     try {
       const used = tokenRef.current;
-      const res = await fetch(`/api/blood/live/${sessionId}`, { headers: used ? { "x-live-token": used } : {}, cache: "no-store" });
-      const json = await res.json();
+      // A hung request would stall the coalescer forever, so every fetch has a deadline.
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 12_000);
+      let res: Response;
+      try {
+        res = await fetch(`/api/blood/live/${sessionId}`, { headers: used ? { "x-live-token": used } : {}, cache: "no-store", signal: ctl.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+      const json = await res.json().catch(() => null);
       // The token changed while this request was in flight (e.g. we just joined): this snapshot lacks our `me` view.
       if (tokenRef.current !== used) {
         coalescerRef.current?.trigger();
         return;
       }
       if (!res.ok || !json?.ok) {
-        setError(json?.error?.message ?? "Could not load the session.");
+        setError(json?.error?.message ?? `Could not load the session (server answered ${res.status}).`);
+        setLink((l) => (l === "ended" ? l : "reconnecting"));
         return;
       }
       apply(json.data as FullSnapshot, used);
