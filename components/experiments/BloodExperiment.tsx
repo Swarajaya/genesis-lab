@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { ErrorState, type UiError } from "@/components/ui/ErrorState";
 import { ExperimentShell } from "@/components/ui/ExperimentShell";
@@ -11,19 +10,16 @@ import { bySlug } from "@/lib/experiments";
 import { BloodForm, EMERGENCY_EXAMPLE, INITIAL_FORM, type FormState } from "./BloodForm";
 import { BloodResults, type BloodResponse } from "./BloodResults";
 
-const LiveBloodMode = dynamic(() => import("./blood-live/LiveBloodMode"), { ssr: false, loading: () => <Glass className="h-40" aria-hidden /> });
-
 const SDG_STORY = [
   "A transfusion decision is a race against the clock, and a blood group is only one of the things that decide it. Antibodies, antigens, distance, shelf life and urgency all matter. This experiment shows the whole picture at once, so the right unit reaches the right patient faster, and fewer units expire unused on a shelf.",
-  "SDG 3, Good Health and Well-being: faster, better-informed matching in an emergency supports safer transfusions and better outcomes. Live Mode shows it under pressure: twelve patients compete for a limited supply, and the network re-ranks everything the moment a donor cancels, a unit expires or a patient gets worse.",
-  "SDG 9, Industry, Innovation and Infrastructure: the blood supply is treated as infrastructure, with live inventory, multi-patient allocation and real-time coordination between donors, hospitals and a command center. A donor who scans a QR code and joins from a phone shows how a connected network can scale beyond a single hospital.",
+  "SDG 3, Good Health and Well-being: faster, better-informed matching in an emergency supports safer transfusions and better outcomes. The network ranks every donor unit by antibodies, antigens, distance, shelf life and urgency, so the right unit reaches the right patient faster.",
+  "SDG 9, Industry, Innovation and Infrastructure: the blood supply is treated as infrastructure, with visible inventory, shelf-life tracking and distance-aware matching across donors and hospitals. Seeing every donor and unit as one connected network shows how supply can be coordinated beyond a single hospital.",
 ];
 
 const DEMO_CODES = DEMO_DONORS.map((d) => d.code);
 const HUE = bySlug("blood")?.hue ?? "#ff6b7a";
 
 export default function BloodExperiment() {
-  const [mode, setMode] = useState<"normal" | "live">("normal");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -78,22 +74,6 @@ export default function BloodExperiment() {
   return (
     <ExperimentShell slug="blood" flowActive={flow} large sdgStory={SDG_STORY}>
       <div className="space-y-5">
-        <div role="tablist" aria-label="Blood experiment mode" className="inline-flex rounded-full border border-line bg-white/[0.03] p-1">
-          {([["normal", "NORMAL MODE"], ["live", "LIVE MODE"]] as const).map(([m, label]) => (
-            <button
-              key={m}
-              type="button"
-              role="tab"
-              aria-selected={mode === m}
-              onClick={() => setMode(m)}
-              className={`rounded-full px-4 py-1.5 font-mono text-[11px] tracking-[0.16em] transition ${mode === m ? (m === "live" ? "bg-[#b48bff] text-[#12081f] shadow-[0_0_28px_-6px_rgba(180,139,255,0.9)]" : "bg-white/10 text-text") : "text-dim hover:text-text"}`}
-            >
-              {m === "live" && <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current align-middle" aria-hidden />}
-              {label}
-            </button>
-          ))}
-        </div>
-        {mode === "live" ? <LiveBloodMode /> : (<>
         <BloodForm form={form} onChange={update} onSubmit={run} onExample={() => update(EMERGENCY_EXAMPLE)} onReset={reset} busy={busy} takenCodes={DEMO_CODES} />
 
         <div ref={resultRef} aria-live="polite">
@@ -115,7 +95,6 @@ export default function BloodExperiment() {
             </motion.div>
           )}
         </div>
-        </>)}
       </div>
     </ExperimentShell>
   );
